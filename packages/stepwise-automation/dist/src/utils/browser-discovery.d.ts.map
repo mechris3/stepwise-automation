@@ -1,1 +1,0 @@
-{"version":3,"file":"browser-discovery.d.ts","sourceRoot":"","sources":["../../../src/utils/browser-discovery.ts"],"names":[],"mappings":"AAIA;;GAEG;AACH,MAAM,WAAW,iBAAiB;IAChC,IAAI,EAAE,MAAM,CAAC;IACb,cAAc,EAAE,MAAM,CAAC;IACvB,WAAW,CAAC,EAAE,MAAM,CAAC;CACtB;AAgHD;;;;;;GAMG;AACH,wBAAgB,gBAAgB,IAAI,iBAAiB,EAAE,CA8BtD"}

@@ -1,3 +1,5 @@
 /packages/sample-app/node_modules
 /packages/sample-tests/node_modules
 /packages/stepwise-automation/node_modules
+/packages/stepwise-automation/dist
+/packages/stepwise-automation/test-results
