@@ -1,4 +1,4 @@
-# stepwise-automation-dev
+# stepwise-automation
 
 Debugger-style browser automation with live step-through execution, breakpoints, and a visual dashboard. Dual Puppeteer/Playwright support. Write journeys once, run them with either engine.
 
