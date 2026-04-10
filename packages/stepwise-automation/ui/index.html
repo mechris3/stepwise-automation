@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Stepwise Automation — debugger-style browser test runner dashboard">
+    <meta name="theme-color" content="#0d1117">
+    <title>Stepwise Automation</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="app">
+
+        <!-- Header -->
+        <header class="app-header" role="banner">
+            <div class="header-left">
+                <span class="logo" aria-hidden="true">
+                    <svg width="12" height="24" viewBox="0 0 12 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7.5 0.5L1 15h4.5L4 27.5l7-16H7L7.5 0.5z" fill="var(--accent-primary)" stroke="var(--accent-hover)" stroke-width="0.75" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+                <h1 class="app-title">Stepwise Automation</h1>
+            </div>
+            <div class="header-right">
+                <div class="engine-selector">
+                    <label for="engineSelect" class="sr-only">Browser engine</label>
+                    <select id="engineSelect" aria-label="Select browser engine">
+                        <option value="puppeteer">Puppeteer</option>
+                        <option value="playwright">Playwright</option>
+                    </select>
+                </div>
+                <button id="settingsToggle" class="btn-icon" aria-label="Toggle settings panel" aria-expanded="false" aria-controls="settings-panel">
+                    ⚙
+                </button>
+            </div>
+        </header>
+
+        <!-- Settings Panel (hidden by default) -->
+        <aside id="settings-panel" class="settings-panel" role="complementary" aria-label="Settings" hidden>
+            <div class="settings-content">
+                <div class="settings-group">
+                    <h3>Browser</h3>
+                    <div class="setting-row">
+                        <label for="targetUrl">Target URL</label>
+                        <div class="input-with-action">
+                            <div class="combobox-wrapper" role="combobox" aria-expanded="false" aria-haspopup="listbox" aria-owns="targetUrl-listbox">
+                                <input type="text" id="targetUrl" placeholder="http://localhost:3000"
+                                       aria-describedby="targetUrlHint" aria-autocomplete="list"
+                                       aria-controls="targetUrl-listbox" aria-activedescendant="">
+                                <button type="button" class="combobox-toggle" aria-label="Toggle URL history" tabindex="-1" hidden>
+                                    ▾
+                                </button>
+                                <ul id="targetUrl-listbox" class="combobox-listbox" role="listbox" tabindex="-1" hidden>
+                                    <!-- <li role="option"> items rendered dynamically -->
+                                </ul>
+                            </div>
+                        </div>
+                        <span id="targetUrlHint" class="hint">Base URL of the application under test. Overrides config baseUrl.</span>
+                    </div>
+                    <div class="setting-row">
+                        <label for="browserPath">Browser path</label>
+                        <div class="input-with-action">
+                            <input type="text" id="browserPath" placeholder="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" aria-describedby="browserPathHint">
+                        </div>
+                        <span id="browserPathHint" class="hint">Full path to browser executable. Leave empty to use Puppeteer's bundled Chromium.</span>
+                    </div>
+                    <div class="setting-row">
+                        <label for="userDataDir">User data directory</label>
+                        <div class="input-with-action">
+                            <input type="text" id="userDataDir" placeholder="~/Library/Application Support/Google/Chrome" aria-describedby="userDataDirHint">
+                        </div>
+                        <span id="userDataDirHint" class="hint">Browser profile directory. Loads extensions like Redux DevTools.</span>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>Viewport</h3>
+                    <div class="setting-row">
+                        <label for="viewportPreset" class="sr-only">Viewport size</label>
+                        <select id="viewportPreset" aria-label="Viewport preset">
+                            <option value="custom">Custom</option>
+                            <option value="1920x1080">Desktop 1080p — 1920 × 1080</option>
+                            <option value="1536x864">Laptop HiDPI — 1536 × 864</option>
+                            <option value="1440x900">Laptop — 1440 × 900</option>
+                            <option value="1366x768">Laptop Small — 1366 × 768</option>
+                            <option value="1280x720" selected>HD 720p — 1280 × 720</option>
+                            <option value="1024x768">Tablet Landscape — 1024 × 768</option>
+                            <option value="820x1180">iPad Air — 820 × 1180</option>
+                            <option value="768x1024">iPad Mini — 768 × 1024</option>
+                            <option value="430x932">iPhone 15 Pro Max — 430 × 932</option>
+                            <option value="412x915">Pixel 7 — 412 × 915</option>
+                            <option value="393x852">iPhone 15 Pro — 393 × 852</option>
+                            <option value="375x812">iPhone SE — 375 × 812</option>
+                            <option value="360x800">Android Small — 360 × 800</option>
+                        </select>
+                        <div class="dimension-inputs">
+                            <div class="dimension-field">
+                                <label for="viewportWidth" class="sr-only">Width</label>
+                                <input type="number" id="viewportWidth" min="320" max="3840" value="1280" aria-label="Viewport width">
+                                <span class="dimension-label">W</span>
+                            </div>
+                            <span class="dimension-separator" aria-hidden="true">×</span>
+                            <div class="dimension-field">
+                                <label for="viewportHeight" class="sr-only">Height</label>
+                                <input type="number" id="viewportHeight" min="240" max="2160" value="720" aria-label="Viewport height">
+                                <span class="dimension-label">H</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>Options</h3>
+                    <div class="toggle-row">
+                        <input type="checkbox" id="devtoolsToggle" role="switch">
+                        <label for="devtoolsToggle">Open DevTools on launch</label>
+                    </div>
+                    <div class="toggle-row">
+                        <input type="checkbox" id="keepBrowserOpenToggle" role="switch">
+                        <label for="keepBrowserOpenToggle">Keep browser open after test</label>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Layout: Sidebar + Content -->
+        <div class="main-layout">
+
+            <!-- Sidebar: Journey List -->
+            <nav class="sidebar" aria-label="Journey list">
+                <div class="sidebar-header">
+                    <div class="select-all">
+                        <input type="checkbox" id="selectAll" aria-label="Select all journeys">
+                        <label for="selectAll">Journeys</label>
+                    </div>
+                </div>
+                <div id="journey-list" class="journey-list" role="list" aria-live="polite">
+                    <!-- Journey items populated by JavaScript -->
+                </div>
+            </nav>
+
+            <!-- Resize Handle -->
+            <div class="resize-handle"
+                 role="separator"
+                 aria-orientation="vertical"
+                 aria-valuenow="260"
+                 aria-valuemin="128"
+                 aria-valuemax="960"
+                 aria-label="Resize sidebar"
+                 tabindex="0">
+            </div>
+
+            <!-- Content Area -->
+            <main class="content" role="main">
+
+                <!-- Toolbar: Play | Stop | Resume | Step | Status -->
+                <div class="toolbar" role="toolbar" aria-label="Test execution controls">
+                    <div class="toolbar-actions">
+                        <button id="runBtn" class="btn-primary btn-action" aria-label="Run selected journeys">
+                            <span class="btn-icon-text" aria-hidden="true">▶</span> Play
+                        </button>
+                        <button id="pauseBtn" class="btn-accent btn-action" disabled aria-label="Pause execution">
+                            <span class="btn-icon-text" aria-hidden="true">⏸</span> Pause
+                        </button>
+                        <button id="resumeBtn" class="btn-accent btn-action" disabled aria-label="Resume execution">
+                            <span class="btn-icon-text" aria-hidden="true">⏯</span> Resume
+                        </button>
+                        <button id="stepBtn" class="btn-secondary btn-action" disabled aria-label="Step forward">
+                            <span class="btn-icon-text" aria-hidden="true">⏭</span> Step
+                        </button>
+                        <div class="step-count-wrapper">
+                            <label for="stepCount" class="sr-only">Step count</label>
+                            <input type="number" id="stepCount" min="1" max="100" value="1" disabled aria-label="Number of steps">
+                        </div>
+                        <div class="toolbar-delay">
+                            <label for="actionDelay" class="toolbar-delay-label" aria-label="Action delay">🐌</label>
+                            <input type="range" id="actionDelay"
+                                   min="0" max="100" step="1" value="0"
+                                   aria-label="Action delay in milliseconds"
+                                   aria-valuemin="0" aria-valuemax="5000" aria-valuenow="0">
+                            <output for="actionDelay" id="actionDelayValue">0ms</output>
+                        </div>
+                        <button id="stopBtn" class="btn-danger btn-action" disabled aria-label="Stop execution">
+                            <span class="btn-icon-text" aria-hidden="true">■</span> Stop
+                        </button>
+                    </div>
+                    <div class="toolbar-status" aria-live="polite">
+                        <span id="executionStatus" class="status-badge status-idle">Idle</span>
+                    </div>
+                </div>
+
+                <!-- Tab Bar: Actions / Console -->
+                <div class="tab-bar" role="tablist" aria-label="Output panels">
+                    <button class="tab active" role="tab" id="tab-actions" aria-selected="true" aria-controls="panel-actions" data-tab="action-log">
+                        Actions
+                    </button>
+                    <button class="tab" role="tab" id="tab-console" aria-selected="false" aria-controls="panel-console" data-tab="console-output">
+                        Console
+                    </button>
+                    <div class="tab-actions">
+                        <button id="clearBreakpointsBtn" class="btn-icon-sm" aria-label="Clear all breakpoints" data-tooltip="Clear all breakpoints" data-tooltip-align="left" disabled>
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <circle cx="8" cy="8" r="6" fill="#e51400"/>
+                                <line x1="5" y1="5" x2="11" y2="11" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                                <line x1="11" y1="5" x2="5" y2="11" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </button>
+                        <button id="copyBtn" class="btn-icon-sm" aria-label="Copy output" data-tooltip="Copy output" data-tooltip-align="left">📋</button>
+                        <button id="clearBtn" class="btn-icon-sm" aria-label="Clear output" data-tooltip="Clear output" data-tooltip-align="left">🗑</button>
+                    </div>
+                </div>
+
+                <!-- Tab Panels -->
+                <div class="tab-panels">
+                    <!-- Actions Tab -->
+                    <div id="panel-actions" class="tab-panel active" role="tabpanel" aria-labelledby="tab-actions">
+                        <div id="action-log" class="action-log" role="log" aria-live="polite" aria-relevant="additions">
+                            <!-- Action items with breakpoint pins populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Console Tab -->
+                    <div id="panel-console" class="tab-panel" role="tabpanel" aria-labelledby="tab-console" hidden>
+                        <pre id="console-output" class="console-output" role="log" aria-live="polite" aria-relevant="additions"></pre>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+
+        <!-- Footer -->
+        <footer class="app-footer" role="contentinfo">
+            <div class="footer-left">
+                <span id="connectionStatus" class="connection-indicator disconnected" role="status" aria-live="polite">
+                    <span class="connection-dot" aria-hidden="true"></span>
+                    Disconnected
+                </span>
+            </div>
+            <div class="footer-right">
+                <span id="testResultsSummary" class="results-summary" aria-live="polite">No tests run</span>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- JavaScript Modules (order matters — dependencies first) -->
+    <script src="js/state.js"></script>
+    <script src="js/fsm.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/websocket.js"></script>
+    <script src="js/action-log.js"></script>
+    <script src="js/breakpoints.js"></script>
+    <script src="js/url-history.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/test-runner.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sample Todo App</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #333; }
+    .container { max-width: 600px; margin: 40px auto; padding: 0 20px; }
+    h1 { text-align: center; margin-bottom: 24px; color: #1a1a1a; }
+    .auth-section, .app-section { background: #fff; border-radius: 8px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .app-section { display: none; }
+    .form-group { margin-bottom: 12px; }
+    label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+    input[type="text"], input[type="password"] { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+    button { padding: 8px 16px; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; font-weight: 500; }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-secondary { background: #e5e7eb; color: #333; }
+    .btn-danger { background: #ef4444; color: #fff; font-size: 12px; padding: 4px 8px; }
+    .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+    .welcome { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .welcome span { font-weight: 500; }
+    .error { color: #ef4444; font-size: 13px; margin-top: 4px; display: none; }
+    .success { color: #22c55e; font-size: 13px; margin-top: 4px; display: none; }
+    .tabs { display: flex; gap: 0; margin-bottom: 16px; border-bottom: 2px solid #e5e7eb; }
+    .tab { padding: 8px 16px; cursor: pointer; font-weight: 500; color: #666; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+    .tab.active { color: #2563eb; border-bottom-color: #2563eb; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .todo-input { display: flex; gap: 8px; margin-bottom: 16px; }
+    .todo-input input { flex: 1; }
+    .todo-list { list-style: none; }
+    .todo-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+    .todo-item input[type="checkbox"] { width: 18px; height: 18px; }
+    .todo-item .text { flex: 1; }
+    .todo-item .text.completed { text-decoration: line-through; color: #999; }
+    .todo-count { font-size: 13px; color: #666; margin-top: 8px; }
+    .profile-form .form-group { margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Todo App</h1>
+
+    <!-- Auth Section -->
+    <div class="auth-section" data-testid="auth-section">
+      <div class="tabs">
+        <div class="tab active" data-testid="login-tab" onclick="showAuthTab('login')">Login</div>
+        <div class="tab" data-testid="signup-tab" onclick="showAuthTab('signup')">Sign Up</div>
+      </div>
+
+      <div id="login-form" class="tab-content active">
+        <div class="form-group">
+          <label for="login-username">Username</label>
+          <input type="text" id="login-username" data-testid="login-username" placeholder="Enter username">
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" data-testid="login-password" placeholder="Enter password">
+        </div>
+        <div class="error" data-testid="login-error"></div>
+        <button class="btn-primary" data-testid="login-submit" onclick="handleLogin()">Login</button>
+      </div>
+
+      <div id="signup-form" class="tab-content">
+        <div class="form-group">
+          <label for="signup-username">Username</label>
+          <input type="text" id="signup-username" data-testid="signup-username" placeholder="Choose username">
+        </div>
+        <div class="form-group">
+          <label for="signup-password">Password</label>
+          <input type="password" id="signup-password" data-testid="signup-password" placeholder="Choose password">
+        </div>
+        <div class="form-group">
+          <label for="signup-display-name">Display Name</label>
+          <input type="text" id="signup-display-name" data-testid="signup-display-name" placeholder="Your display name">
+        </div>
+        <div class="error" data-testid="signup-error"></div>
+        <button class="btn-primary" data-testid="signup-submit" onclick="handleSignup()">Sign Up</button>
+      </div>
+    </div>
+
+    <!-- App Section (shown after login) -->
+    <div class="app-section" data-testid="app-section">
+      <div class="welcome">
+        <span>Welcome, <span data-testid="display-name"></span></span>
+        <button class="btn-secondary" data-testid="logout-btn" onclick="handleLogout()">Logout</button>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" data-testid="todos-tab" onclick="showAppTab('todos')">Todos</div>
+        <div class="tab" data-testid="profile-tab" onclick="showAppTab('profile')">Profile</div>
+      </div>
+
+      <!-- Todos Tab -->
+      <div id="todos-content" class="tab-content active" data-testid="todos-content">
+        <div class="todo-input">
+          <input type="text" id="todo-input" data-testid="todo-input" placeholder="What needs to be done?">
+          <button class="btn-primary" data-testid="add-todo" onclick="handleAddTodo()">Add</button>
+        </div>
+        <ul class="todo-list" data-testid="todo-list"></ul>
+        <div class="todo-count" data-testid="todo-count"></div>
+      </div>
+
+      <!-- Profile Tab -->
+      <div id="profile-content" class="tab-content" data-testid="profile-content">
+        <div class="profile-form">
+          <div class="form-group">
+            <label for="profile-display-name">Display Name</label>
+            <input type="text" id="profile-display-name" data-testid="profile-display-name">
+          </div>
+          <div class="success" data-testid="profile-success">Profile updated!</div>
+          <button class="btn-primary" data-testid="save-profile" onclick="handleSaveProfile()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+
+    function showAuthTab(tab) {
+      document.querySelectorAll('.auth-section .tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.auth-section .tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelector(`[data-testid="${tab}-tab"]`).classList.add('active');
+      document.getElementById(`${tab}-form`).classList.add('active');
+    }
+
+    function showAppTab(tab) {
+      document.querySelectorAll('.app-section .tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.app-section .tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelector(`[data-testid="${tab}-tab"]`).classList.add('active');
+      document.getElementById(`${tab}-content`).classList.add('active');
+    }
+
+    async function handleLogin() {
+      const username = document.getElementById('login-username').value;
+      const password = document.getElementById('login-password').value;
+      const errorEl = document.querySelector('[data-testid="login-error"]');
+      errorEl.style.display = 'none';
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok) { errorEl.textContent = data.error; errorEl.style.display = 'block'; return; }
+        currentUser = data.user;
+        showApp();
+      } catch (e) { errorEl.textContent = 'Network error'; errorEl.style.display = 'block'; }
+    }
+
+    async function handleSignup() {
+      const username = document.getElementById('signup-username').value;
+      const password = document.getElementById('signup-password').value;
+      const displayName = document.getElementById('signup-display-name').value;
+      const errorEl = document.querySelector('[data-testid="signup-error"]');
+      errorEl.style.display = 'none';
+      try {
+        const res = await fetch('/api/signup', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, displayName })
+        });
+        const data = await res.json();
+        if (!res.ok) { errorEl.textContent = data.error; errorEl.style.display = 'block'; return; }
+        currentUser = data.user;
+        showApp();
+      } catch (e) { errorEl.textContent = 'Network error'; errorEl.style.display = 'block'; }
+    }
+
+    function handleLogout() {
+      currentUser = null;
+      document.querySelector('[data-testid="auth-section"]').style.display = 'block';
+      document.querySelector('[data-testid="app-section"]').style.display = 'none';
+    }
+
+    function showApp() {
+      document.querySelector('[data-testid="auth-section"]').style.display = 'none';
+      document.querySelector('[data-testid="app-section"]').style.display = 'block';
+      document.querySelector('[data-testid="display-name"]').textContent = currentUser.displayName;
+      document.getElementById('profile-display-name').value = currentUser.displayName;
+      loadTodos();
+    }
+
+    async function loadTodos() {
+      const res = await fetch('/api/todos');
+      const todos = await res.json();
+      renderTodos(todos);
+    }
+
+    function renderTodos(todos) {
+      const list = document.querySelector('[data-testid="todo-list"]');
+      list.innerHTML = todos.map(t => `
+        <li class="todo-item" data-testid="todo-item-${t.id}">
+          <input type="checkbox" data-testid="todo-checkbox-${t.id}" ${t.completed ? 'checked' : ''} onchange="toggleTodo(${t.id}, this.checked)">
+          <span class="text ${t.completed ? 'completed' : ''}" data-testid="todo-text-${t.id}">${t.text}</span>
+          <button class="btn-danger" data-testid="todo-delete-${t.id}" onclick="deleteTodo(${t.id})">Delete</button>
+        </li>
+      `).join('');
+      const remaining = todos.filter(t => !t.completed).length;
+      document.querySelector('[data-testid="todo-count"]').textContent = `${remaining} item${remaining !== 1 ? 's' : ''} remaining`;
+    }
+
+    async function handleAddTodo() {
+      const input = document.getElementById('todo-input');
+      if (!input.value.trim()) return;
+      await fetch('/api/todos', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: input.value, username: currentUser?.username })
+      });
+      input.value = '';
+      loadTodos();
+    }
+
+    async function toggleTodo(id, completed) {
+      await fetch(`/api/todos/${id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed })
+      });
+      loadTodos();
+    }
+
+    async function deleteTodo(id) {
+      await fetch(`/api/todos/${id}`, { method: 'DELETE' });
+      loadTodos();
+    }
+
+    async function handleSaveProfile() {
+      const displayName = document.getElementById('profile-display-name').value;
+      const successEl = document.querySelector('[data-testid="profile-success"]');
+      successEl.style.display = 'none';
+      const res = await fetch('/api/profile', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser.username, displayName })
+      });
+      if (res.ok) {
+        currentUser.displayName = displayName;
+        document.querySelector('[data-testid="display-name"]').textContent = displayName;
+        successEl.style.display = 'block';
+        setTimeout(() => successEl.style.display = 'none', 3000);
+      }
+    }
+
+    // Enter key support
+    document.getElementById('todo-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') handleAddTodo(); });
+    document.getElementById('login-password')?.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+    document.getElementById('signup-display-name')?.addEventListener('keydown', e => { if (e.key === 'Enter') handleSignup(); });
+  </script>
+</body>
+</html>

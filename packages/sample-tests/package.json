@@ -1,0 +1,13 @@
+{
+  "name": "sample-tests",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test:ui": "stepwise-automation serve",
+    "test:run": "stepwise-automation run"
+  },
+  "dependencies": {
+    "@mechris3/stepwise-automation": "^0.1.0",
+    "puppeteer": "^22.15.0"
+  }
+}

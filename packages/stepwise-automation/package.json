@@ -1,0 +1,72 @@
+{
+  "name": "@mechris3/stepwise-automation",
+  "version": "0.1.0",
+  "description": "Debugger-style browser automation test runner with live execution control and visual dashboard",
+  "license": "MIT",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "bin": {
+    "stepwise-automation": "dist/bin/stepwise.js"
+  },
+  "files": [
+    "dist/",
+    "ui/",
+    "bin/",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mechris3/stepwise-automation.git"
+  },
+  "keywords": [
+    "browser-automation",
+    "test-runner",
+    "puppeteer",
+    "playwright",
+    "debugger",
+    "breakpoints",
+    "page-object-model",
+    "e2e-testing",
+    "visual-dashboard"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "dev": "tsx watch bin/stepwise.ts serve",
+    "dev:run": "tsx bin/stepwise.ts run",
+    "test": "vitest --run",
+    "test:watch": "vitest"
+  },
+  "peerDependencies": {
+    "playwright": ">=1.40.0",
+    "puppeteer": ">=22.0.0"
+  },
+  "peerDependenciesMeta": {
+    "puppeteer": {
+      "optional": true
+    },
+    "playwright": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "glob": "^11.0.0",
+    "jiti": "^2.6.1",
+    "tsx": "^4.21.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/jsdom": "^28.0.1",
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.0",
+    "fast-check": "^3.22.0",
+    "jsdom": "^29.0.2",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
