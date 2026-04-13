@@ -146,12 +146,10 @@ export class TestExecutor {
       const isPuppeteer = this.tool === 'puppeteer';
 
       // Resolve runner path relative to this file's compiled location (dist/src/server/)
-      // The TS source files are at src/runners/puppeteer/ and src/runners/playwright/
-      // We go up from dist/src/server/ to package root, then into src/
-      const packageRoot = path.resolve(__dirname, '../../..');
+      // Go up one level to dist/src/, then into runners/
       const runnerScript = isPuppeteer
-        ? path.join(packageRoot, 'src/runners/puppeteer/run-journey.ts')
-        : path.join(packageRoot, 'src/runners/playwright/all-journeys.spec.ts');
+        ? path.resolve(__dirname, '../runners/puppeteer/run-journey.js')
+        : path.resolve(__dirname, '../runners/playwright/all-journeys.spec.js');
 
       // Build command and args per engine
       // Puppeteer: use node with tsx loaders for both CJS and ESM
@@ -161,7 +159,7 @@ export class TestExecutor {
       // Playwright: use npx to invoke the consuming project's playwright
       const tsxEsmPath = 'file://' + require.resolve('tsx/esm');
       const command = isPuppeteer ? process.execPath : 'npx';
-      const playwrightConfigPath = path.join(packageRoot, 'src/runners/playwright/playwright.config.ts');
+      const playwrightConfigPath = path.resolve(__dirname, '../runners/playwright/playwright.config.js');
       const args = isPuppeteer
         ? ['--require', require.resolve('tsx/cjs'), '--import', tsxEsmPath, runnerScript, journey]
         : ['playwright', 'test', '--config', playwrightConfigPath, '--grep', journey];

@@ -1,6 +1,6 @@
 {
   "name": "@mechris3/stepwise-automation",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Debugger-style browser automation test runner with live execution control and visual dashboard",
   "license": "MIT",
   "main": "dist/src/index.js",

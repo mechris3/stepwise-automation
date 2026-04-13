@@ -30,7 +30,7 @@ const chromeOffset = 150;
 
 export default defineConfig({
   testDir: '.',
-  testMatch: 'all-journeys.spec.ts',
+  testMatch: 'all-journeys.spec.js',
   fullyParallel: false,
   workers: 1,
   timeout: 5 * 60 * 1000, // 5 minutes per test — generous for complex journeys

@@ -17,6 +17,7 @@
  * test registrations from this file.
  */
 
+// @ts-ignore — playwright is an optional peer dependency
 import { test, expect } from '@playwright/test';
 import * as path from 'path';
 import * as fs from 'fs';

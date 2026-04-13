@@ -132,7 +132,7 @@ function resolveEngine(
  */
 function runPuppeteer(journeys: string[], configPath?: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const runnerPath = path.resolve(__dirname, '../src/runners/puppeteer/run-all-journeys.ts');
+    const runnerPath = path.resolve(__dirname, '../src/runners/puppeteer/run-all-journeys.js');
     const tsxEsmPath = 'file://' + require.resolve('tsx/esm');
     const args = ['--require', require.resolve('tsx/cjs'), '--import', tsxEsmPath, runnerPath, ...journeys];
 
@@ -169,7 +169,7 @@ function runPlaywright(
   return new Promise((resolve, reject) => {
     const playwrightConfigPath = path.resolve(
       __dirname,
-      '../src/runners/playwright/playwright.config.ts',
+      '../src/runners/playwright/playwright.config.js',
     );
 
     const args = ['playwright', 'test', '--config', playwrightConfigPath];

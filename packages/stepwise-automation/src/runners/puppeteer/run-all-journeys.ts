@@ -37,7 +37,7 @@ interface JourneyResult {
 function runJourney(journeyId: string): Promise<JourneyResult> {
   return new Promise((resolve) => {
     const startTime = Date.now();
-    const runnerPath = require('path').join(__dirname, 'run-journey.ts');
+    const runnerPath = require('path').join(__dirname, 'run-journey.js');
     const tsxEsmPath = 'file://' + require.resolve('tsx/esm');
 
     const child = spawn(process.execPath, [
