@@ -21,7 +21,8 @@ export interface RunStartMessage {
 /** Broadcast when a batch run completes (all journeys finished or stopped). */
 export interface RunEndMessage {
   type: 'run-end';
-  results: Array<{ journey: string; status: 'passed' | 'failed' }>;
+  results: Array<{ journey: string; status: 'passed' | 'failed' | 'skipped' }>;
+  error?: string;
 }
 
 /** Broadcast when a single journey starts executing. */
@@ -52,6 +53,7 @@ export interface LogMessage {
 export interface ErrorMessage {
   type: 'error';
   message: string;
+  source?: string;
   journey?: string;
   tool?: string;
 }

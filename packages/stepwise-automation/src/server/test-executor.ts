@@ -80,7 +80,24 @@ export class TestExecutor {
     await this.killExistingBrowser();
 
     // Run globalSetup once before all journeys
-    await this.runHook('globalSetup');
+    try {
+      await this.runHook('globalSetup');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+
+      // Broadcast error identifying the source as globalSetup
+      this.wsManager.broadcast({ type: 'error', message: errorMessage, source: 'globalSetup' });
+
+      // Broadcast run-end with all journeys marked as skipped
+      this.wsManager.broadcast({
+        type: 'run-end',
+        error: `globalSetup failed: ${errorMessage}`,
+        results: journeys.map(j => ({ journey: j, status: 'skipped' as const })),
+      });
+
+      // Return immediately — do not execute journeys, beforeEach, afterEach, or globalTeardown
+      return;
+    }
 
     const results: { journey: string; status: 'passed' | 'failed' }[] = [];
 
@@ -260,13 +277,31 @@ export class TestExecutor {
 
   /**
    * Run a configured test data lifecycle hook by name.
-   * Logs errors but does not stop the run.
+   *
+   * For `globalSetup`: validates the export is callable and re-throws any error
+   * so the caller (`run()`) can handle abort logic.
+   *
+   * For all other hooks: logs errors but does not stop the run.
    *
    * @param hookName - One of 'globalSetup', 'beforeEach', 'afterEach', 'globalTeardown'
    */
   private async runHook(hookName: 'globalSetup' | 'beforeEach' | 'afterEach' | 'globalTeardown'): Promise<void> {
     const hookPath = this.config.testData?.[hookName];
     if (!hookPath) return;
+
+    if (hookName === 'globalSetup') {
+      console.log(`[TestExecutor] Running ${hookName}...`);
+      const { createJiti } = require('jiti') as typeof import('jiti');
+      const jiti = createJiti(__filename);
+      const hookModule = jiti(hookPath);
+      const hookFn = hookModule.default || hookModule[hookName] || hookModule;
+      if (typeof hookFn !== 'function') {
+        throw new Error('module does not export a callable function');
+      }
+      await hookFn();
+      console.log(`[TestExecutor] ${hookName} complete`);
+      return;
+    }
 
     try {
       console.log(`[TestExecutor] Running ${hookName}...`);
@@ -281,7 +316,7 @@ export class TestExecutor {
       console.log(`[TestExecutor] ${hookName} complete`);
     } catch (error) {
       console.error(`[TestExecutor] ${hookName} failed:`, error);
-      // Continue — hooks never stop the run
+      // Continue — non-globalSetup hooks never stop the run
     }
   }
 

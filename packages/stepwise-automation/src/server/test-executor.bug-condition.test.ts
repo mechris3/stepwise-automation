@@ -34,7 +34,13 @@ vi.mock('./journey-discovery', () => ({
 
 // Mock breakpoint-storage
 vi.mock('./breakpoint-storage', () => ({
-  getBreakpoints: vi.fn().mockReturnValue([]),
+  getBreakpoints: vi.fn(() => []),
+  setBreakpoints: vi.fn(),
+}));
+
+// Mock settings-storage
+vi.mock('./settings-storage', () => ({
+  getFileBreakpoints: vi.fn(() => []),
 }));
 
 // Mock ipc utils

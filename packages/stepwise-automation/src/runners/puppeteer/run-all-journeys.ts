@@ -97,6 +97,24 @@ async function runHook(hookPath: string, hookName: string): Promise<void> {
 }
 
 /**
+ * Runs the globalSetup hook. Unlike `runHook`, this function lets errors
+ * propagate naturally so the caller can abort the run on failure.
+ *
+ * @param hookPath - Absolute path to the globalSetup hook module
+ * @throws If the module does not export a callable function or if the hook throws
+ */
+async function runGlobalSetup(hookPath: string): Promise<void> {
+  console.log('🔧 Running globalSetup...');
+  const hookModule = await import(hookPath);
+  const hookFn = hookModule.default || hookModule.globalSetup || hookModule;
+  if (typeof hookFn !== 'function') {
+    throw new Error('module does not export a callable function');
+  }
+  await hookFn();
+  console.log('🔧 globalSetup complete');
+}
+
+/**
  * Prints a formatted summary table of journey results to stdout.
  *
  * @param results - Array of journey results collected during the run
@@ -156,9 +174,18 @@ async function main(): Promise<void> {
 
   console.log(`🚀 Running ${journeysToRun.length} journey(s) with Puppeteer\n`);
 
-  // Run globalSetup once before all journeys
+  // Run globalSetup once before all journeys — abort on failure
   if (config.testData?.globalSetup) {
-    await runHook(config.testData.globalSetup, 'globalSetup');
+    try {
+      await runGlobalSetup(config.testData.globalSetup);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      process.stderr.write(`❌ globalSetup failed: ${message}\n`);
+      if (error instanceof Error && error.stack) {
+        process.stderr.write(`${error.stack}\n`);
+      }
+      process.exit(1);
+    }
   }
 
   const results: JourneyResult[] = [];
