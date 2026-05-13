@@ -153,7 +153,7 @@ Open http://localhost:3001. Set the Target URL in the settings panel to your app
 npm run test:run
 ```
 
-Exit code 0 = all passed, 1 = failure.
+Exit code 0 = all passed, 1 = failure (journey failure or `globalSetup` error).
 
 ## Configuration (optional)
 
@@ -182,6 +182,8 @@ export default async function () {
 ```
 
 Available hooks: `globalSetup` (once before all journeys), `beforeEach` (before each journey), `afterEach` (after each journey), `globalTeardown` (once after all journeys).
+
+> **Important:** If `globalSetup` throws, the entire test run aborts immediately — no journeys execute, `globalTeardown` is skipped, and the process exits with code 1. All other hooks (`beforeEach`, `afterEach`, `globalTeardown`) log errors and continue without affecting the run or journey pass/fail status.
 
 See the [package README](packages/stepwise-automation/README.md) for the full configuration reference, lifecycle hooks, CLI options, and API docs.
 

@@ -465,7 +465,7 @@ npx stepwise-automation run --tool playwright
 ### Exit Codes
 
 - `0` — all journeys passed
-- `1` — one or more journeys failed, or a configuration error occurred
+- `1` — one or more journeys failed, `globalSetup` threw an error, or a configuration error occurred
 
 Journeys execute sequentially. Execution stops on the first failure.
 
@@ -672,10 +672,77 @@ globalSetup() → beforeEach() → A → afterEach() → beforeEach() → B → 
 
 ### Error Handling
 
-If a hook throws an error:
-- The error is logged to the console
-- Execution continues to the next journey (hooks never stop the run)
-- The journey itself is not marked as failed due to a hook error
+Hook error behavior differs between `globalSetup` and all other hooks:
+
+#### `globalSetup` — Abort on Failure
+
+**`globalSetup` failures abort the entire run immediately.** The rationale: if the environment isn't ready (database not seeded, service not started, etc.), running journeys would produce meaningless failures.
+
+**CLI mode** (`stepwise-automation run`):
+
+```
+❌ globalSetup failed: Connection refused: ECONNREFUSED 127.0.0.1:5432
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1595:16)
+```
+
+- Error printed to stderr with `❌ globalSetup failed:` prefix
+- Stack trace printed if the thrown value is an `Error` with a `.stack` property
+- No journeys execute
+- `globalTeardown` is skipped (environment was never set up)
+- Process exits with code `1`
+
+**Dashboard mode** (`stepwise-automation serve`):
+
+Two WebSocket messages are broadcast in sequence:
+
+```json
+{ "type": "error", "message": "Connection refused: ECONNREFUSED 127.0.0.1:5432", "source": "globalSetup" }
+```
+
+```json
+{
+  "type": "run-end",
+  "error": "globalSetup failed: Connection refused: ECONNREFUSED 127.0.0.1:5432",
+  "results": [
+    { "journey": "login-flow", "status": "skipped" },
+    { "journey": "checkout-flow", "status": "skipped" }
+  ]
+}
+```
+
+- No journeys execute
+- No `beforeEach`, `afterEach`, or `globalTeardown` hooks execute
+- All scheduled journeys appear as `skipped` in the results
+- The `error` field on `run-end` distinguishes an aborted run from a completed one
+- The `source` field on the error message lets the UI distinguish hook-level errors from journey-level errors
+
+#### `beforeEach`, `afterEach`, `globalTeardown` — Log and Continue
+
+All non-`globalSetup` hooks use a **log-and-continue** strategy. A hook failure never aborts the run or marks a journey as failed.
+
+**CLI output on hook failure:**
+
+```
+⚠️  beforeEach failed: fetch failed
+```
+
+**Behavior:**
+- The error is logged to stderr (CLI) or server console (dashboard) with a `⚠️ <hookName> failed:` prefix
+- Execution continues to the next step (journey continues after `beforeEach` failure, next journey starts after `afterEach` failure)
+- Journey pass/fail status is determined solely by the journey's own execution
+- Exit code reflects journey outcomes only — a `globalTeardown` error does not turn a passing run into a failure
+- The `run-end` broadcast reflects journey results only, with no `error` field
+
+**Why this design?** Hook failures in `beforeEach`/`afterEach`/`globalTeardown` are often non-fatal (e.g., a cleanup step that partially fails). Aborting the entire run for a teardown error would be overly aggressive. If your `beforeEach` is critical, throw from `globalSetup` instead — or validate preconditions at the start of each journey.
+
+#### Summary Table
+
+| Hook | On Error | Journeys Run? | Exit Code Affected? |
+|------|----------|---------------|---------------------|
+| `globalSetup` | Abort immediately | No — all skipped | Yes — always `1` |
+| `beforeEach` | Log and continue | Yes — current journey proceeds | No |
+| `afterEach` | Log and continue | Yes — next journey proceeds | No |
+| `globalTeardown` | Log and continue | Already finished | No |
 
 ### Common Patterns
 
@@ -825,6 +892,149 @@ All public exports from `@mechris3/stepwise-automation`:
 ### Optional
 
 - `findReduxDevToolsExtension()` — locate Redux DevTools browser extension
+
+## WebSocket Messages (Dashboard Integration)
+
+When building custom dashboard UIs or integrating with the stepwise server, the WebSocket connection at `ws://localhost:<port>` broadcasts typed JSON messages. Connect and parse `event.data` as JSON.
+
+### Message Types
+
+| Type | Direction | Description |
+|------|-----------|-------------|
+| `run-start` | Server → Client | Batch run has begun |
+| `run-end` | Server → Client | Batch run completed, aborted, or stopped |
+| `test-start` | Server → Client | A single journey started executing |
+| `test-end` | Server → Client | A single journey finished |
+| `log` | Server → Client | stdout output from a running journey |
+| `error` | Server → Client | stderr output or hook-level error |
+| `journeys` | Server → Client | List of discovered journeys |
+
+### Message Schemas
+
+```typescript
+interface RunStartMessage {
+  type: 'run-start';
+  journeys: string[];           // IDs of journeys about to run
+  tool: 'puppeteer' | 'playwright';
+}
+
+interface RunEndMessage {
+  type: 'run-end';
+  results: Array<{
+    journey: string;
+    status: 'passed' | 'failed' | 'skipped';
+  }>;
+  error?: string;               // Present only when globalSetup aborted the run
+}
+
+interface TestStartMessage {
+  type: 'test-start';
+  journey: string;
+  tool: 'puppeteer' | 'playwright';
+}
+
+interface TestEndMessage {
+  type: 'test-end';
+  journey: string;
+  tool: 'puppeteer' | 'playwright';
+  status: 'passed' | 'failed';
+  duration: string;             // e.g. "2.34" (seconds)
+}
+
+interface LogMessage {
+  type: 'log';
+  message: string;
+  journey?: string;
+  tool?: string;
+}
+
+interface ErrorMessage {
+  type: 'error';
+  message: string;
+  source?: string;              // "globalSetup" when the error is from the setup hook
+  journey?: string;             // Journey ID when the error is from a journey
+  tool?: string;
+}
+
+interface JourneysMessage {
+  type: 'journeys';
+  journeys: Array<{ id: string; name: string }>;
+}
+```
+
+### Detecting a globalSetup Abort
+
+To distinguish a normal run completion from a globalSetup abort in your UI:
+
+```typescript
+ws.onmessage = (event) => {
+  const msg = JSON.parse(event.data);
+
+  if (msg.type === 'error' && msg.source === 'globalSetup') {
+    // Show a prominent error banner — the run is about to abort
+    showSetupError(msg.message);
+  }
+
+  if (msg.type === 'run-end' && msg.error) {
+    // Run was aborted — all journeys will be 'skipped'
+    showAbortedRun(msg.error, msg.results);
+  } else if (msg.type === 'run-end') {
+    // Normal completion — show pass/fail results
+    showResults(msg.results);
+  }
+};
+```
+
+## Troubleshooting
+
+### `globalSetup` fails but I don't see why
+
+The CLI prints the full stack trace to stderr. If you're piping output, make sure stderr is visible:
+
+```bash
+npx stepwise-automation run 2>&1 | tee output.log
+```
+
+In dashboard mode, check the browser console for the WebSocket `error` message with `source: 'globalSetup'`.
+
+### Hook module not found
+
+If you see `Cannot find module './helpers/global-setup.ts'`, check that:
+1. The path in `stepwise.config.ts` is relative to the config file's directory
+2. The file exists and has a valid export (default function or named export matching the hook name)
+
+### Hook module doesn't export a function
+
+If your hook file exports an object or class instead of a function, you'll see:
+
+```
+❌ globalSetup failed: module does not export a callable function
+```
+
+Fix: ensure your hook exports a default async function:
+
+```typescript
+// ✅ Correct
+export default async function() { /* ... */ }
+
+// ✅ Also correct (named export matching hook name)
+export async function globalSetup() { /* ... */ }
+
+// ❌ Wrong — exports an object
+export default { setup: () => {} };
+```
+
+### Exit code is 1 but all journeys passed
+
+This happens when `globalSetup` throws. The run aborts before any journeys execute, so you won't see journey results — just the error message. Check stderr for the `❌ globalSetup failed:` line.
+
+### Dashboard shows all journeys as "skipped"
+
+This means `globalSetup` failed. The `run-end` message will have an `error` field explaining what went wrong. Fix the underlying issue in your `globalSetup` hook (database not running, API not reachable, etc.).
+
+### `beforeEach` errors but journeys still pass
+
+This is expected behavior. `beforeEach` errors are logged but don't abort the run or fail journeys. If your `beforeEach` is critical (e.g., it resets state that the journey depends on), consider moving that logic into `globalSetup` or adding validation at the start of each journey.
 
 ## License
 
