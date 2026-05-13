@@ -372,4 +372,5 @@ export abstract class BaseAdapter implements BrowserAdapter {
   abstract selectByText(selector: string, text: string, exact?: boolean): Promise<void>;
   abstract clickAndDownload(selector: string): Promise<DownloadResult>;
   abstract clearDownloads(): Promise<void>;
+  abstract type(selector: string, value: string, options?: { delay?: number }): Promise<void>;
 }

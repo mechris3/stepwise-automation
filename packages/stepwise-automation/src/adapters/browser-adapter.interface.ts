@@ -192,4 +192,16 @@ export interface BrowserAdapter {
    * Safe to call when no downloads exist.
    */
   clearDownloads(): Promise<void>;
+
+  /**
+   * Types text character-by-character using real keyboard events.
+   * Unlike `fill()` which sets the DOM value directly, this simulates actual
+   * keypress events (keydown, keypress, keyup) for each character. Use this
+   * for third-party inputs (e.g. Stripe Checkout) that rely on keyboard events.
+   * @param selector - CSS selector of input element
+   * @param value - Text to type character-by-character
+   * @param options - Optional configuration
+   * @param options.delay - Milliseconds between keystrokes (default: 30)
+   */
+  type(selector: string, value: string, options?: { delay?: number }): Promise<void>;
 }

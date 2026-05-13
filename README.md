@@ -95,7 +95,8 @@ export class LoginJourney {
 
 - `navigateToApp()` — navigate to the app's target URL (reads from dashboard settings)
 - `click(selector)` — click an element
-- `fill(selector, value)` — type into an input
+- `fill(selector, value)` — type into an input (sets DOM value, dispatches input/change events)
+- `type(selector, value, options?)` — type character-by-character using real keyboard events (for third-party inputs like Stripe)
 - `getText(selector)` — get element text content
 - `waitForSelector(selector)` — wait for element to appear
 - `isVisible(selector)` — check element visibility
@@ -123,7 +124,7 @@ For browser-level operations (session management, clipboard, file uploads), use 
 - `clickAndDownload(selector)` — click a download trigger and get the file path and suggested filename
 - `clearDownloads()` — remove all downloaded files from the download directory
 
-All 23 methods above make up the complete `BrowserAdapter` interface. Every method works with both Puppeteer and Playwright.```
+All 24 methods above make up the complete `BrowserAdapter` interface. Every method works with both Puppeteer and Playwright.```
 
 Journey files must match `./journeys/**/*.journey.ts` (the default glob). The filename becomes the journey ID.
 
@@ -153,7 +154,7 @@ Open http://localhost:3001. Set the Target URL in the settings panel to your app
 npm run test:run
 ```
 
-Exit code 0 = all passed, 1 = failure.
+Exit code 0 = all passed, 1 = failure (journey failure or `globalSetup` error).
 
 ## Configuration (optional)
 
@@ -182,6 +183,8 @@ export default async function () {
 ```
 
 Available hooks: `globalSetup` (once before all journeys), `beforeEach` (before each journey), `afterEach` (after each journey), `globalTeardown` (once after all journeys).
+
+> **Important:** If `globalSetup` throws, the entire test run aborts immediately — no journeys execute, `globalTeardown` is skipped, and the process exits with code 1. All other hooks (`beforeEach`, `afterEach`, `globalTeardown`) log errors and continue without affecting the run or journey pass/fail status.
 
 See the [package README](packages/stepwise-automation/README.md) for the full configuration reference, lifecycle hooks, CLI options, and API docs.
 
