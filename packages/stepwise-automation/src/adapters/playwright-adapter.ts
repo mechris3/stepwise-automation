@@ -266,4 +266,14 @@ export class PlaywrightAdapter extends BaseAdapter {
     this.logActionComplete();
     await this.addSlowModeDelay();
   }
+
+  async type(selector: string, value: string, options?: { delay?: number }): Promise<void> {
+    await this.logAndCheckAction(`Type: ${selector}`);
+    const locator = this.page.locator(selector);
+    await locator.waitFor({ state: 'visible', timeout: 10000 });
+    await locator.click();
+    await locator.pressSequentially(value, { delay: options?.delay ?? 30 });
+    this.logActionComplete();
+    await this.addSlowModeDelay();
+  }
 }

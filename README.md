@@ -95,7 +95,8 @@ export class LoginJourney {
 
 - `navigateToApp()` — navigate to the app's target URL (reads from dashboard settings)
 - `click(selector)` — click an element
-- `fill(selector, value)` — type into an input
+- `fill(selector, value)` — type into an input (sets DOM value, dispatches input/change events)
+- `type(selector, value, options?)` — type character-by-character using real keyboard events (for third-party inputs like Stripe)
 - `getText(selector)` — get element text content
 - `waitForSelector(selector)` — wait for element to appear
 - `isVisible(selector)` — check element visibility
@@ -123,7 +124,7 @@ For browser-level operations (session management, clipboard, file uploads), use 
 - `clickAndDownload(selector)` — click a download trigger and get the file path and suggested filename
 - `clearDownloads()` — remove all downloaded files from the download directory
 
-All 23 methods above make up the complete `BrowserAdapter` interface. Every method works with both Puppeteer and Playwright.```
+All 24 methods above make up the complete `BrowserAdapter` interface. Every method works with both Puppeteer and Playwright.```
 
 Journey files must match `./journeys/**/*.journey.ts` (the default glob). The filename becomes the journey ID.
 

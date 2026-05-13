@@ -278,4 +278,13 @@ export class PuppeteerAdapter extends BaseAdapter {
     this.logActionComplete();
     await this.addSlowModeDelay();
   }
+
+  async type(selector: string, value: string, options?: { delay?: number }): Promise<void> {
+    await this.logAndCheckAction(`Type: ${selector}`);
+    await this.page.waitForSelector(selector, { visible: true, timeout: 10000 });
+    await this.page.click(selector);
+    await this.page.type(selector, value, { delay: options?.delay ?? 30 });
+    this.logActionComplete();
+    await this.addSlowModeDelay();
+  }
 }

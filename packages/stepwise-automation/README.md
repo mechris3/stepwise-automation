@@ -64,6 +64,7 @@ export class BasePage {
 
   async click(selector: string): Promise<void>                    { await this.adapter.click(selector); }
   async fill(selector: string, value: string): Promise<void>      { await this.adapter.fill(selector, value); }
+  async type(selector: string, value: string, options?: { delay?: number }): Promise<void> { await this.adapter.type(selector, value, options); }
   async getText(selector: string): Promise<string>                 { return this.adapter.getText(selector); }
   async waitForSelector(selector: string): Promise<void>           { await this.adapter.waitForSelector(selector); }
   async isVisible(selector: string): Promise<boolean>              { return this.adapter.isVisible(selector); }
@@ -251,7 +252,8 @@ export class ProfilePage extends BasePage {
 `BasePage` shorthand methods (all delegate to `this.adapter`):
 
 - `click(selector)` — click an element
-- `fill(selector, value)` — type into an input
+- `fill(selector, value)` — type into an input (sets DOM value, dispatches input/change events)
+- `type(selector, value, options?)` — type character-by-character using real keyboard events (for third-party inputs like Stripe)
 - `getText(selector)` — get element text content
 - `waitForSelector(selector)` — wait for element to appear
 - `isVisible(selector)` — check element visibility
@@ -286,7 +288,7 @@ await context.selectByIndex('#dropdown', 2);
 const clipboard = await context.readClipboard();
 ```
 
-All 23 methods above make up the complete `BrowserAdapter` interface. Every method is available on both Puppeteer and Playwright adapters.
+All 24 methods above make up the complete `BrowserAdapter` interface. Every method is available on both Puppeteer and Playwright adapters.
 
 ### File Downloads
 
